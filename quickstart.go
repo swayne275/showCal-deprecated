@@ -7,7 +7,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"time"
 
 	"golang.org/x/net/context"
 	"golang.org/x/oauth2"
@@ -76,20 +75,24 @@ func saveToken(path string, token *oauth2.Token) {
 }
 
 // Creates a basic calendar event for a single instance of a TV Show
-func createSingleEvent(eventDetails BasicEvent) bool {
+func createSingleEvent(event *calendar.Event) bool {
 	// !!! SW check for valid start and end dates too
-	if (eventDetails.Summary == "") ||
-		(eventDetails.Description == "") {
+	if (event.Summary == "") ||
+		(event.Description == "") {
 		return false
 	}
-	event := &calendar.Event{
-		Summary:     eventDetails.Summary,
-		Description: eventDetails.Description,
-		Start:       &eventDetails.Start,
-		End:         &eventDetails.End,
+	b, err := ioutil.ReadFile("client_secret.json")
+	if err != nil {
+		log.Fatalf("Unable to read client secret file: %v", err)
 	}
-	calendarId := "primary"
-	event, err = srv.Events.Insert(calendarId, event).Do()
+	config, err := google.ConfigFromJSON(b, calendar.CalendarScope)
+	srv, err := calendar.New(getClient(config))
+	if err != nil {
+		log.Fatalf("Unable to retrieve Calendar client: %v", err)
+	}
+	calendarID := "primary"
+
+	event, err = srv.Events.Insert(calendarID, event).Do()
 	if err != nil {
 		log.Fatalf("Unable to create single calendar event: %v\n", err)
 		return false
@@ -99,13 +102,30 @@ func createSingleEvent(eventDetails BasicEvent) bool {
 }
 
 func main() {
+	theEvent := &calendar.Event{
+		Summary:     "My first event",
+		Description: "Trying to add an event",
+		Start: &calendar.EventDateTime{
+			DateTime: "2018-08-02T09:00:00",
+			TimeZone: "America/Denver",
+		},
+		End: &calendar.EventDateTime{
+			DateTime: "2018-08-02T10:00:00",
+			TimeZone: "America/Denver",
+		},
+	}
+	createSingleEvent(theEvent)
+}
+
+/*
+func main() {
 	b, err := ioutil.ReadFile("client_secret.json")
 	if err != nil {
 		log.Fatalf("Unable to read client secret file: %v", err)
 	}
 
 	// If modifying these scopes, delete your previously saved client_secret.json.
-	config, err := google.ConfigFromJSON(b, calendar.CalendarScope)
+	config, err := google.ConfigFromJSON(b, calendar.CalendarReadonlyScope)
 	if err != nil {
 		log.Fatalf("Unable to parse client secret file to config: %v", err)
 	}
@@ -134,3 +154,4 @@ func main() {
 		}
 	}
 }
+*/
