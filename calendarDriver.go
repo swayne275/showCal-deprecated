@@ -101,7 +101,7 @@ func createSingleEvent(event *calendar.Event) bool {
 	return true
 }
 
-func main() {
+func main12() {
 	theEvent := &calendar.Event{
 		Summary:     "My first event",
 		Description: "Trying to add an event",
